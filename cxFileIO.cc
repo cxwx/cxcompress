@@ -1,5 +1,7 @@
 // cspell:disable
 #include "cxFileIO.hh"
+#include <boost/iostreams/categories.hpp>
+#include <iostream>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/lzma.hpp>
@@ -10,7 +12,25 @@
 
 namespace cxfunc {
 
-static FileFormat guess_format(const std::string& filename) {
+namespace {
+
+// Delegates to a streambuf but never closes it.
+// Prevents filtering_streambuf::reset() from closing streams we don't own.
+struct non_closing_source {
+  using char_type = char;
+  using category = boost::iostreams::source_tag;
+
+  std::streambuf* buf;
+  explicit non_closing_source(std::streambuf* b) : buf(b) {}
+
+  std::streamsize read(char* s, std::streamsize n) {
+    std::streamsize got = buf->sgetn(s, n);
+    return got == 0 ? -1 : got;
+  }
+  void close() {}
+};
+
+FileFormat guess_format(const std::string& filename) {
   auto ext = std::filesystem::path(filename).extension().string();
   if (ext == ".gz") return FileFormat::kGzip;
   if (ext == ".bz2") return FileFormat::kBzip2;
@@ -20,8 +40,8 @@ static FileFormat guess_format(const std::string& filename) {
   return FileFormat::kPlain;
 }
 
-static void push_decompressor(boost::iostreams::filtering_streambuf<boost::iostreams::input>& f,
-                              FileFormat fmt) {
+void push_decompressor(boost::iostreams::filtering_streambuf<boost::iostreams::input>& f,
+                       FileFormat fmt) {
   switch (fmt) {
     case FileFormat::kGzip: f.push(boost::iostreams::gzip_decompressor()); break;
     case FileFormat::kBzip2: f.push(boost::iostreams::bzip2_decompressor()); break;
@@ -32,6 +52,8 @@ static void push_decompressor(boost::iostreams::filtering_streambuf<boost::iostr
     case FileFormat::kPlain: break;
   }
 }
+
+}  // namespace
 
 cxFileIO::cxFileIO() {
   theFilter.push(non_closing_source{std::cin.rdbuf()});
