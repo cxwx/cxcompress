@@ -7,12 +7,12 @@
 
 namespace cxfunc {
 
-enum class FileFormat { kAuto, kPlain, kGzip, kBzip2, kLzma, kZstd, kZlib };
+enum class cxFileIOFormat : std::uint8_t { kAuto, kPlain, kGzip, kBzip2, kLzma, kZstd, kZlib };
 
 class cxFileIO {
  public:
-  explicit cxFileIO(const std::string& filename, FileFormat fmt = FileFormat::kAuto);
-  explicit cxFileIO(std::istream& stream, FileFormat fmt = FileFormat::kPlain);
+  explicit cxFileIO(const std::string& filename, cxFileIOFormat fmt = cxFileIOFormat::kAuto);
+  explicit cxFileIO(std::istream& stream, cxFileIOFormat fmt = cxFileIOFormat::kPlain);
   cxFileIO();  // reads from standard input
   ~cxFileIO();
 

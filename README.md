@@ -42,14 +42,14 @@ int main() {
 ### From file (manual format)
 
 ```cpp
-cxfunc::cxFileIO file("data.bin", cxfunc::FileFormat::kGzip);
+cxfunc::cxFileIO file("data.bin", cxfunc::cxFileIOFormat::kGzip);
 ```
 
 ### From any istream
 
 ```cpp
 std::istringstream ss("compressed content");
-cxfunc::cxFileIO io(ss, cxfunc::FileFormat::kPlain);
+cxfunc::cxFileIO io(ss, cxfunc::cxFileIOFormat::kPlain);
 ```
 
 ### From stdin

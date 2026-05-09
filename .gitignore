@@ -5,3 +5,4 @@ build/
 *.dylib
 *.so
 compile_commands.json
+/.harper-dictionary.txt
