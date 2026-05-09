@@ -1,1 +1,7 @@
-/.claude
+build/
+.claude/
+*.o
+*.a
+*.dylib
+*.so
+compile_commands.json
