@@ -72,12 +72,12 @@ target("cxfileio")
     set_installdir(path.join(os.getenv("HOME"), "software/install"))
     add_installfiles("*.hh", {prefixdir = "include/cxfunc"})
 
--- Example executable
-target("example")
+-- Test executable
+target("cxfileio_test")
     set_kind("binary")
     set_default(false, {install = false})
 
-    add_files("example.cc")
+    add_files("test/main.cpp")
     add_deps("cxfileio")
 
     add_packages("boost")

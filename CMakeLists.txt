@@ -15,35 +15,38 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Boost REQUIRED COMPONENTS iostreams)
 find_package(ROOT QUIET)
 
-file(GLOB sources ${PROJECT_SOURCE_DIR}/*.cc)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/*.hh)
-
+# === library ===
 if(ROOT_FOUND)
+    message(STATUS "ROOT found, enabling dictionary generation.")
     include(${ROOT_USE_FILE})
+    add_definitions(${ROOT_CXX_FLAGS})
     root_generate_dictionary(G__cxfileio cxFileIO.hh LINKDEF LinkDef.h)
-    add_library(
-        cxfileio
-        SHARED
-        ${sources}
-        ${CMAKE_CURRENT_BINARY_DIR}/G__cxfileio.cxx
-    )
+    set(CX_SRCS cxFileIO.cc G__cxfileio.cxx)
 else()
-    add_library(cxfileio SHARED ${sources})
+    message(STATUS "ROOT not found, building without dictionary support.")
+    set(CX_SRCS cxFileIO.cc)
 endif()
 
-target_include_directories(cxfileio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(cxfileio PUBLIC Boost::iostreams ${ROOT_LIBRARIES})
+add_library(cxfileio SHARED ${CX_SRCS})
 set_target_properties(
     cxfileio
     PROPERTIES VERSION ${CX_VER_SS} SOVERSION ${CX_VER_MAJ}
 )
 
-# Example
-add_executable(example example.cc)
-target_link_libraries(example PRIVATE cxfileio)
+target_include_directories(cxfileio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(cxfileio PUBLIC Boost::iostreams ${ROOT_LIBRARIES})
 
+# === test ===
+option(CX_BUILD_TEST "Build test binary" ON)
+if(CX_BUILD_TEST)
+    add_executable(cxfileio_test test/main.cpp)
+    target_include_directories(cxfileio_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(cxfileio_test PRIVATE cxfileio)
+endif()
+
+# === install ===
 set(CMAKE_INSTALL_PREFIX $ENV{HOME}/software/install/)
-install(FILES ${headers} DESTINATION include/cxfunc/)
+install(FILES cxFileIO.hh DESTINATION include/cxfunc/)
 
 if(ROOT_FOUND)
     install(
