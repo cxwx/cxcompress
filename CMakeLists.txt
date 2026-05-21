@@ -13,21 +13,24 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Dependencies
 find_package(Boost REQUIRED COMPONENTS iostreams)
-find_package(ROOT REQUIRED)
-include(${ROOT_USE_FILE})
+find_package(ROOT QUIET)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/*.hh)
 
-root_generate_dictionary(G__cxfileio cxFileIO.hh LINKDEF LinkDef.h)
+if(ROOT_FOUND)
+    include(${ROOT_USE_FILE})
+    root_generate_dictionary(G__cxfileio cxFileIO.hh LINKDEF LinkDef.h)
+    add_library(
+        cxfileio
+        SHARED
+        ${sources}
+        ${CMAKE_CURRENT_BINARY_DIR}/G__cxfileio.cxx
+    )
+else()
+    add_library(cxfileio SHARED ${sources})
+endif()
 
-# Library
-add_library(
-    cxfileio
-    SHARED
-    ${sources}
-    ${CMAKE_CURRENT_BINARY_DIR}/G__cxfileio.cxx
-)
 target_include_directories(cxfileio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(cxfileio PUBLIC Boost::iostreams ${ROOT_LIBRARIES})
 set_target_properties(
@@ -41,12 +44,15 @@ target_link_libraries(example PRIVATE cxfileio)
 
 set(CMAKE_INSTALL_PREFIX $ENV{HOME}/software/install/)
 install(FILES ${headers} DESTINATION include/cxfunc/)
-install(
-    FILES
-        ${CMAKE_BINARY_DIR}/libcxfileio_rdict.pcm
-        ${CMAKE_BINARY_DIR}/libcxfileio.rootmap
-    DESTINATION lib/
-)
+
+if(ROOT_FOUND)
+    install(
+        FILES
+            ${CMAKE_BINARY_DIR}/libcxfileio_rdict.pcm
+            ${CMAKE_BINARY_DIR}/libcxfileio.rootmap
+        DESTINATION lib/
+    )
+endif()
 install(
     TARGETS cxfileio
     RUNTIME DESTINATION bin
