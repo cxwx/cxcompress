@@ -16,8 +16,6 @@ namespace cxfunc {
 
 namespace {
 
-// Delegates to a streambuf but never closes it.
-// Prevents filtering_streambuf::reset() from closing streams we don't own.
 struct non_closing_source {
   using char_type = char;
   using category = boost::iostreams::source_tag;
@@ -55,6 +53,19 @@ void push_decompressor(boost::iostreams::filtering_streambuf<boost::iostreams::i
   }
 }
 
+void push_compressor(boost::iostreams::filtering_streambuf<boost::iostreams::output>& f,
+                     cxFileIOFormat fmt) {
+  switch (fmt) {
+    case cxFileIOFormat::kGzip: f.push(boost::iostreams::gzip_compressor()); break;
+    case cxFileIOFormat::kBzip2: f.push(boost::iostreams::bzip2_compressor()); break;
+    case cxFileIOFormat::kLzma: f.push(boost::iostreams::lzma_compressor()); break;
+    case cxFileIOFormat::kZstd: f.push(boost::iostreams::zstd_compressor()); break;
+    case cxFileIOFormat::kZlib: f.push(boost::iostreams::zlib_compressor()); break;
+    case cxFileIOFormat::kAuto:
+    case cxFileIOFormat::kPlain: break;
+  }
+}
+
 }  // namespace
 
 cxFileIO::cxFileIO() {
@@ -80,5 +91,21 @@ cxFileIO::cxFileIO(std::istream& stream, cxFileIOFormat fmt) {
 cxFileIO::~cxFileIO() {
   theFilter.reset();
 }
+
+cxFileOW::cxFileOW(const std::string& filename, cxFileIOFormat fmt)
+    : filename_(filename), fmt_(fmt) {
+  outFileBuf_.open(filename_, std::ios_base::out | std::ios_base::binary);
+  if (!outFileBuf_.is_open()) {
+    throw std::runtime_error("cannot write file: " + filename_);
+  }
+
+  auto realFmt = fmt_;
+  if (fmt_ == cxFileIOFormat::kAuto) { realFmt = guess_format(filename_); }
+  push_compressor(outFilter_, realFmt);
+  outFilter_.push(outFileBuf_);
+  outStream_.rdbuf(&outFilter_);
+}
+
+cxFileOW::~cxFileOW() = default;
 
 }  // namespace cxfunc

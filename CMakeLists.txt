@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 set(CX_VER_MAJ 0) # major
-set(CX_VER_MIN 5) # minor
+set(CX_VER_MIN 6) # minor
 set(CX_VER_PAT 0) # patch
 set(CX_VER_SS ${CX_VER_MAJ}.${CX_VER_MIN}.${CX_VER_PAT})
 message("Version: ${CX_VER_SS}")
@@ -40,7 +40,10 @@ target_link_libraries(cxfileio PUBLIC Boost::iostreams ${ROOT_LIBRARIES})
 option(CX_BUILD_TEST "Build test binary" ON)
 if(CX_BUILD_TEST)
     add_executable(cxfileio_test test/main.cpp)
-    target_include_directories(cxfileio_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(
+        cxfileio_test
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    )
     target_link_libraries(cxfileio_test PRIVATE cxfileio)
 endif()
 
