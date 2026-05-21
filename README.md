@@ -1,5 +1,7 @@
 # cxfileio
 
+[![CI](https://github.com/cxwx/cxcompress/actions/workflows/ci.yml/badge.svg)](https://github.com/cxwx/cxcompress/actions/workflows/ci.yml)
+
 A lightweight C++ library for reading plain and compressed files transparently.
 
 Supported formats: `.gz`, `.bz2`, `.xz`, `.zst`, `.zlib`, and plain files.
